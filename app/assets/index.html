@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Brunch</title>
+  <style>
+    /*@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+    @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+    @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);*/
+
+    body { font-family: 'Droid Serif'; }
+    h1, h2, h3 {
+      font-family: 'Yanone Kaffeesatz';
+      font-weight: normal;
+    }
+    .remark-code, .remark-inline-code { font-family: 'Menlo'; }
+
+    .flow img {
+      display: block;
+      max-width: 70%;
+      margin: 0 auto;
+    }
+    
+  </style>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/vendor.js"></script>
+  <script src="/app.js"></script>
+  <script>require('initialize');</script>
+</head>
+<body>
+  <textarea id="source">
+
+class: center, middle
+
+# MobX
+
+---
+
+# What is state?
+
+All your data you need to determine program flow!
+
+Backend data
+
+User inputs
+
+UI state  
+  *(e.g. dropdown open, scroll position, view)*
+
+---
+
+# How to to react on state change
+
+Manually
+
+Always
+
+Custom set function and an event system
+
+Dirty checking
+
+Observables
+
+---
+# Observables
+
+---
+# MobX
+
+```javascript
+
+// observable
+var store = observable({
+  counter: 0
+});
+
+// 
+autorun(() => document.querySelector('#basic-example .output')
+                      .innerHTML = store.counter )
+
+document.querySelector('#basic-example button')
+        .addEventListener('click',
+          () => store.counter++ )
+```
+
+[Demo](basic-example.html)
+
+---
+# What does `observable()` do?
+
+```javascript
+var state = observable({
+  counter: 0
+});
+```
+
+transforms internally to something like
+
+
+```javascript
+var state = {
+  _counter: 0,
+  get counter() {
+    // track which reaction is accessing
+    return this._counter;
+  }
+
+  set counter(value) {
+    this._counter = value;
+    // run all tracked reactions
+  }
+}
+```
+
+---
+class: flow
+
+# Diagram
+
+![](flow.png)
+---
+
+# Reactions I
+
+### `computed`
+   These are derived values.
+```javascript
+var villain = observable({
+  firstName: 'Hans',
+  lastName: 'Gruber',
+  get fullName() {
+    return this.firstName + ' ' + this.lastName;
+  }
+})
+```
+
+This reaction runs on demand
+
+---
+
+# Reactions II
+
+### `autorun`
+   These execute site effects
+```
+autorun(function() {
+  if (villain.fullName === 'Hans Gruber'){
+    alert('John McClane!')
+  } 
+})
+```
+This reaction runs the first time on registration and automatically every timeb when used observable fields change
+---
+# Actions 
+
+Mutating state imperatively everywhere can be messy.
+
+```javascript
+var state = observable({
+  name: 'Hans',
+  updateName: action(function (name) {
+    this.name = name;
+  })
+});
+
+useStrict(true);
+
+state.name = 'John' // throws error
+state.updateName('John') // is valid
+```
+
+---
+#ES6 & React- Decorators
+
+```javascript
+class Villain {
+  @observable firstName = Hans;
+  @observable lastName = Gruber;
+  @computed get fullName() {
+    return `${this.firstName} ${lastName}`
+  }
+  @action updateFirstName(firstName) {
+    this.firstName = firstName
+  }
+}
+
+@observer class Hero extends React.Component{
+  render() {
+    return(
+      <h1>Call { state.fullName === 'Hans Gruber'
+              ? 'John McClane'
+              : 'somebody else'}</h1>
+    )
+  }
+}
+```
+
+---
+# Conclusion
+
+## Pros
+
+* Very readable code 
+* Small size
+* Fast
+
+## Cons
+
+* You depend on the executed code of your `autorun()`
+* `autorun` has to run one first time
+* Decorators and the current state of ES6 classes
+
+---
+class: center, middle
+# The end 
+
+Web: www.pixelkritzel.de
+
+Email: timo@pixelkritzel.de
+
+Twitter: @pixelkritzel
+
+Github: pixelkritzel
+
+This slides: pixelkritzel.de/mobx
+
+    </textarea>
+    <script src="remark.js">
+    </script>
+    <script>
+      var slideshow = remark.create({
+        ratio: '16:9',
+    highlightLanguage: 'javascript',
+    navigation: {
+        scroll: false,
+        touch: true,
+        click: false
+    },
+    highlightStyle: 'solarized-light'
+      });
+    </script>
+</body>
