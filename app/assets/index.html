@@ -4,14 +4,14 @@
   <meta name="viewport" content="width=device-width">
   <title>Brunch</title>
   <style>
-    /*@import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+    @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
     @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
-    @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);*/
 
     body { font-family: 'Droid Serif'; }
     h1, h2, h3 {
       font-family: 'Yanone Kaffeesatz';
       font-weight: normal;
+      text-align: center;
     }
     .remark-code, .remark-inline-code { font-family: 'Menlo'; }
 
@@ -35,20 +35,20 @@ class: center, middle
 # MobX
 
 ---
-
 # What is state?
 
-All your data you need to determine program flow!
+Your data to a given instance you need to determine program flow
 
-Backend data
-
-User inputs
-
-UI state  
+* Backend data
+* User inputs
+* UI state  
   *(e.g. dropdown open, scroll position, view)*
 
----
+````
+Application = function(state)
+````
 
+---
 # How to to react on state change
 
 Manually
@@ -62,25 +62,25 @@ Dirty checking
 Observables
 
 ---
-# Observables
-
----
 # MobX
 
 ```javascript
-
 // observable
 var store = observable({
   counter: 0
 });
 
-// 
-autorun(() => document.querySelector('#basic-example .output')
-                      .innerHTML = store.counter )
+// reaction
+autorun(function() {
+  document.querySelector('#basic-example .output')
+           .innerHTML = store.counter;
+}) 
 
+// action
 document.querySelector('#basic-example button')
-        .addEventListener('click',
-          () => store.counter++ )
+        .addEventListener('click', function() {
+          store.counter++;
+        });
 ```
 
 [Demo](basic-example.html)
@@ -101,7 +101,7 @@ transforms internally to something like
 var state = {
   _counter: 0,
   get counter() {
-    // track which reaction is accessing
+    // track which derivation is accessing
     return this._counter;
   }
 
@@ -112,6 +112,8 @@ var state = {
 }
 ```
 
+It observes the properties not the object and not the values
+
 ---
 class: flow
 
@@ -120,7 +122,7 @@ class: flow
 ![](flow.png)
 ---
 
-# Reactions I
+# Derivations I
 
 ### `computed`
    These are derived values.
@@ -134,11 +136,11 @@ var villain = observable({
 })
 ```
 
-This reaction runs on demand
+This derivation runs on demand
 
 ---
 
-# Reactions II
+# Derivations II
 
 ### `autorun`
    These execute site effects
@@ -149,14 +151,48 @@ autorun(function() {
   } 
 })
 ```
-This reaction runs the first time on registration and automatically every timeb when used observable fields change
+This derivation runs the first time on registration and automatically every time when used observable fields change
 
 ---
 # But ...
 
 MobX tracks only the executed code of `autorun` 
 
-Examples
+```javascript
+var comment = observable({
+  isLoaded: false,
+  text: null
+})
+
+autorun( function() {
+  if (comment.isLoaded) {
+    // not executed and therefore not tracked
+    alert(comment.text);
+  }
+})
+```
+---
+# Updating state
+
+```javascript
+var comment = observable({
+  isLoaded: false,
+  data: {
+    text: null,
+    author: null
+  }
+})
+
+// Triggers autorun
+comment.isLoaded = true;
+comment.data.text = 'I like MobX so far';
+comment.data.author = 'BerlinJS',
+
+// Doesn't trigger autorun
+comment.id = 0;
+comment.data.createtAt = (new Date).toString();
+```
+
 ---
 # Actions 
 
@@ -165,7 +201,7 @@ Mutating state imperatively everywhere can be messy.
 ```javascript
 var state = observable({
   name: 'Hans',
-  updateName: action(function (name) {
+  updateName: action(function updateName(name) {
     this.name = name;
   })
 });
@@ -177,7 +213,55 @@ state.updateName('John') // is valid
 ```
 
 ---
-#ES6 & React- Decorators
+# Transactions I
+
+Causes mutiple `autorun` calls
+
+```javascript
+var comment = observable({
+  isLoaded: false,
+  data: {
+    text: null,
+    author: null
+  }
+})
+
+// autorun function will be called for every line
+comment.isLoaded = true;
+comment.data.text = 'I like MobX so far';
+comment.data.author = 'BerlinJS';
+```
+
+---
+# Transactions II
+
+Causes mutiple `autorun` calls
+
+```javascript
+var comment = observable({
+  isLoaded: false,
+  data: {
+    text: null,
+    author: null
+  },
+  loadComment: action(function loadComment(data) {
+    transaction(function() {
+      this.isLoaded = true
+      this.data.text = data.text;
+      this.data.author = data.author;
+    })  
+  })
+})
+
+// autorun function will be called one time
+comment.loadComment({
+  text: 'I like MobX so far',
+  author = 'BerlinJS',
+});
+```
+
+---
+#ES6 decorators & properties
 
 ```javascript
 class Villain {
@@ -190,7 +274,23 @@ class Villain {
     this.firstName = firstName
   }
 }
+```
 
+`.babelrc`
+```javascript
+{
+  "presets": [
+    "es2015",
+    "stage-1"
+  ],
+  "plugins": ["transform-decorators-legacy"]
+}
+```
+
+---
+#React decorator
+
+```javascript
 @observer class Hero extends React.Component{
   render() {
     return(
@@ -200,22 +300,37 @@ class Villain {
     )
   }
 }
-```
 
+@observer HeroFunction = (state) => 
+  <h1>Call { state.fullName === 'Hans Gruber'
+             ? 'John McClane'
+             : 'somebody else'}</h1>
+
+<Devtools />
+```
 ---
 # Conclusion
 
 ## Pros
 
 * Very readable code 
-* Small size
+* Pluggable - It is not bound to any framework
 * Fast
+* Mutability: Referential Integrity
+* Model definitions
 
 ## Cons
 
-* You depend on the executed code of your `autorun()`
+* You depend on the consumed properties of your `autorun()`s
 * `autorun` has to run one first time
 * Decorators and the current state of ES6 classes
+
+---
+# Or in other words
+
+> A state management library like an iPhone. Usuallly it just works and if not: You're holding it wrong.
+
+.center[![](holding_iphone_wrong.jpg)]
 
 ---
 class: center, middle
