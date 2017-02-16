@@ -2,7 +2,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Brunch</title>
+  <title>MobX - state management like an iPhone</title>
   <style>
     @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
     @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
@@ -37,7 +37,7 @@ class: center, middle
 ---
 # What is state?
 
-Your data to a given instance you need to determine program flow
+The data you need to determine the program flow
 
 * Backend data
 * User inputs
@@ -143,7 +143,7 @@ This derivation runs on demand
 # Derivations II
 
 ### `autorun`
-   These execute site effects
+   These execute side effects
 ```
 autorun(function() {
   if (villain.fullName === 'Hans Gruber'){
@@ -235,8 +235,6 @@ comment.data.author = 'BerlinJS';
 ---
 # Transactions II
 
-Causes mutiple `autorun` calls
-
 ```javascript
 var comment = observable({
   isLoaded: false,
@@ -244,20 +242,18 @@ var comment = observable({
     text: null,
     author: null
   },
-  loadComment: action(function loadComment(data) {
-    transaction(function() {
-      this.isLoaded = true
-      this.data.text = data.text;
-      this.data.author = data.author;
-    })  
-  })
+  loadComment: action(function loadComment(data) { ... })
 })
 
 // autorun function will be called one time
-comment.loadComment({
-  text: 'I like MobX so far',
-  author = 'BerlinJS',
-});
+comment.loadComment(newData);
+
+// OR
+transaction(function() {
+  comment.isLoaded = true;
+  comment.data.text = 'I like MobX so far';
+  comment.data.author = 'BerlinJS';
+})
 ```
 
 ---
